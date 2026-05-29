@@ -245,6 +245,116 @@ downloadBtn.addEventListener('click', async () => {
     }
 });
 
+// ========== MUSIC PLAYER PREVIEW (TERPISAH) ==========
+const audioPreview = new Audio();
+// Ganti URL MP3 sesuai keinginan lo
+audioPreview.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
+audioPreview.loop = false;
+
+const musicCover = document.getElementById('musicCover');
+const musicTitle = document.getElementById('musicTitle');
+const musicArtist = document.getElementById('musicArtist');
+const musicDurationText = document.getElementById('musicDurationText');
+const musicProgressSmall = document.getElementById('musicProgressSmall');
+const musicPlayBtn = document.getElementById('musicPlayBtn');
+const musicPlayIcon = document.getElementById('musicPlayIcon');
+
+let isMusicPlaying = false;
+
+// Info lagu (bisa lo ganti sendiri)
+const songList = [
+    { title: 'Lofi Study Beats', artist: 'Chillhop Music', cover: 'https://cdn.pixabay.com/photo/2016/12/18/13/45/vinyl-1915773_640.png', url: 'https://cdnn.ikyyxd.my.id/storage/068dcbc9ab9df63571349928818c1226.mp3?preview=true' },
+    { title: 'Jazz Night', artist: 'Coffee Shop Jazz', cover: 'https://cdn.pixabay.com/photo/2013/07/13/11/46/record-158540_640.png', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+    { title: 'Electronic Dreams', artist: 'Synthwave Pro', cover: 'https://cdn.pixabay.com/photo/2014/04/03/11/53/record-312209_640.png', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }
+];
+
+let currentSongIndex = 0;
+
+function loadSong(index) {
+    const song = songList[index];
+    musicTitle.textContent = song.title;
+    musicArtist.textContent = song.artist;
+    musicCover.src = song.cover;
+    audioPreview.src = song.url;
+    audioPreview.currentTime = 0;
+    if (isMusicPlaying) {
+        audioPreview.play().catch(e => console.log('Autoplay dicegah'));
+        musicCover.classList.add('spinning');
+    } else {
+        musicCover.classList.remove('spinning');
+    }
+    updateMusicTimer();
+}
+
+function updateMusicTimer() {
+    const current = audioPreview.currentTime;
+    const duration = audioPreview.duration;
+    
+    if (isNaN(duration)) {
+        musicDurationText.textContent = '00:00 / 00:00';
+        musicProgressSmall.value = 0;
+        return;
+    }
+    
+    const formatTime = (time) => {
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+    
+    musicDurationText.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+    musicProgressSmall.value = (current / duration) * 100;
+}
+
+audioPreview.addEventListener('timeupdate', updateMusicTimer);
+audioPreview.addEventListener('loadedmetadata', updateMusicTimer);
+
+musicProgressSmall.addEventListener('input', (e) => {
+    const duration = audioPreview.duration;
+    if (!isNaN(duration)) {
+        audioPreview.currentTime = (e.target.value / 100) * duration;
+    }
+});
+
+musicPlayBtn.addEventListener('click', () => {
+    if (isMusicPlaying) {
+        audioPreview.pause();
+        musicCover.classList.remove('spinning');
+        musicPlayIcon.className = 'fas fa-play';
+        isMusicPlaying = false;
+    } else {
+        audioPreview.play().catch(e => {
+            console.log('Autoplay dicegah browser, user harus klik manual');
+        });
+        musicCover.classList.add('spinning');
+        musicPlayIcon.className = 'fas fa-pause';
+        isMusicPlaying = true;
+    }
+});
+
+audioPreview.addEventListener('ended', () => {
+    // Ganti ke lagu berikutnya
+    currentSongIndex = (currentSongIndex + 1) % songList.length;
+    loadSong(currentSongIndex);
+    audioPreview.play().catch(e => console.log('Auto next gagal'));
+    musicCover.classList.add('spinning');
+    musicPlayIcon.className = 'fas fa-pause';
+    isMusicPlaying = true;
+});
+
+// Load lagu pertama
+loadSong(0);
+
+// Klik cover untuk ganti lagu (opsional)
+musicCover.addEventListener('click', () => {
+    currentSongIndex = (currentSongIndex + 1) % songList.length;
+    loadSong(currentSongIndex);
+    if (isMusicPlaying) {
+        audioPreview.play();
+        musicCover.classList.add('spinning');
+    }
+});
+
 // Config Links (ganti sesuai keinginan)
 document.getElementById('telegramBtn').href = 'https://t.me/xazechannel';
 document.getElementById('whatsappBtn').href = 'https://chat.whatsapp.com/YourLink';
