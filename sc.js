@@ -1,345 +1,457 @@
-// ========== SLIDESHOW ==========
-let slides = document.querySelectorAll('#slideshow .slide');
-let currentSlide = 0;
-function nextSlide() {
-    slides[currentSlide].classList.remove('active');
-    currentSlide = (currentSlide + 1) % slides.length;
-    slides[currentSlide].classList.add('active');
-}
-setInterval(nextSlide, 5000);
-
-// ========== JAM ==========
-function updateClock() {
-    const now = new Date();
-    document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID');
-    document.getElementById('timezone').innerText = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ========== IP ADDRESS ==========
-async function fetchIP() {
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        document.getElementById('ipAddress').innerText = data.ip;
-    } catch(e) { document.getElementById('ipAddress').innerText = '192.168.x.x'; }
-}
-fetchIP();
-
-// ========== BATTERY ==========
-function getBatteryInfo() {
-    if ('getBattery' in navigator) {
-        navigator.getBattery().then(battery => {
-            function updateBatt() {
-                let level = Math.floor(battery.level * 100);
-                let icon = battery.charging ? '⚡🔋' : '🔋';
-                document.getElementById('batteryLevel').innerHTML = `${icon} ${level}% ${battery.charging ? '(Mengisi)' : ''}`;
-            }
-            updateBatt();
-            battery.addEventListener('levelchange', updateBatt);
-            battery.addEventListener('chargingchange', updateBatt);
-        });
-    } else {
-        document.getElementById('batteryLevel').innerHTML = '🔋 Baterai: N/A';
-    }
-}
-getBatteryInfo();
-
-// ========== SIDEBAR ==========
-const menuBtn = document.getElementById('menuBtn');
-const sidebarEl = document.getElementById('sidebar');
-const overlayEl = document.getElementById('overlay');
-const downloaderPage = document.getElementById('downloaderPage');
-const closeDownloaderBtn = document.getElementById('closeDownloader');
-
-function closeSidebar() {
-    sidebarEl.classList.remove('open');
-    overlayEl.classList.remove('show');
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-menuBtn.addEventListener('click', () => {
-    sidebarEl.classList.toggle('open');
-    overlayEl.classList.toggle('show');
-});
-overlayEl.addEventListener('click', closeSidebar);
-
-const menuItems = document.querySelectorAll('.menu-item');
-const platformBadge = document.getElementById('selectedPlatformBadge');
-let currentPlatform = '';
-let currentFile = null;
-
-// Elemen UI
-const urlInput = document.getElementById('urlInput');
-const fileInput = document.getElementById('fileInput');
-const uploadArea = document.getElementById('uploadArea');
-const downloadBtn = document.getElementById('downloadActionBtn');
-const statusDiv = document.getElementById('downloadStatus');
-const resultContainer = document.getElementById('resultContainer');
-const resultContent = document.getElementById('resultContent');
-const toolsTitle = document.getElementById('toolsTitle');
-const toolsDesc = document.getElementById('toolsDesc');
-
-menuItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-        currentPlatform = item.getAttribute('data-platform');
-        const platformName = item.textContent.trim();
-        
-        platformBadge.innerHTML = `<span class="platform-badge">📱 Tools: ${platformName}</span>`;
-        toolsTitle.innerHTML = `<i class="${item.querySelector('i').className}"></i> ${platformName}`;
-        
-        // Reset UI
-        urlInput.style.display = 'none';
-        uploadArea.style.display = 'none';
-        fileInput.style.display = 'none';
-        resultContainer.style.display = 'none';
-        urlInput.value = '';
-        currentFile = null;
-        
-        // Tampilkan input sesuai platform
-        if (['tiktok', 'youtube', 'snackvideo', 'videy', 'instagram', 'facebook'].includes(currentPlatform)) {
-            urlInput.style.display = 'block';
-            urlInput.placeholder = 'Masukan link video di sini...';
-            toolsDesc.innerHTML = 'Tempel link video, klik proses untuk download';
-        } else if (currentPlatform === 'hdenhancer') {
-            uploadArea.style.display = 'block';
-            fileInput.style.display = 'block';
-            toolsDesc.innerHTML = 'Upload foto buram, akan diubah jadi HD';
-        } else if (currentPlatform === 'removebg') {
-            uploadArea.style.display = 'block';
-            fileInput.style.display = 'block';
-            toolsDesc.innerHTML = 'Upload foto, background akan otomatis dihapus';
-        }
-        
-        closeSidebar();
-        downloaderPage.classList.add('open');
-    });
-});
-
-closeDownloaderBtn.addEventListener('click', () => {
-    downloaderPage.classList.remove('open');
-});
-
-// ========== THEME TOGGLE ==========
-const themeBtn = document.getElementById('themeBtn');
-themeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    const icon = themeBtn.querySelector('i');
-    icon.classList.toggle('fa-moon');
-    icon.classList.toggle('fa-sun');
-});
-
-// ========== UPLOAD AREA ==========
-uploadArea.addEventListener('click', () => fileInput.click());
-uploadArea.addEventListener('dragover', (e) => e.preventDefault());
-uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    currentFile = e.dataTransfer.files[0];
-    statusDiv.innerHTML = `📷 File siap: ${currentFile.name}`;
-});
-fileInput.addEventListener('change', (e) => {
-    currentFile = e.target.files[0];
-    statusDiv.innerHTML = `📷 File siap: ${currentFile.name}`;
-});
-
-// ========== API FUNCTIONS ==========
-
-// TikTok Downloader
-async function downloadTikTok(url) {
-    try {
-        const apiUrl = `https://api.nexray.eu.cc/downloader/tiktok?url=${encodeURIComponent(url)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.status) {
-            const r = data.result;
-            resultContent.innerHTML = `
-                <video controls poster="${r.cover}" style="width:100%; border-radius:16px">
-                    <source src="${r.data}" type="video/mp4">
-                </video>
-                <div class="caption-text">${r.title || 'Tidak ada caption'}</div>
-                <div class="result-stats">
-                    <div>👁️ ${r.stats?.views}</div>
-                    <div>❤️ ${r.stats?.likes}</div>
-                    <div>💬 ${r.stats?.comment}</div>
-                    <div>📤 ${r.stats?.share}</div>
-                </div>
-                <div class="download-links">
-                    <a href="${r.data}" download class="btn-small">⬇️ Download Video</a>
-                </div>
-            `;
-            resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ Sukses!';
-        }
-    } catch(e) { statusDiv.innerHTML = `❌ Error: ${e.message}`; }
+:root {
+    --bg-gradient-start: #f7f3e9;
+    --bg-gradient-end: #e8e0d3;
+    --card-bg: rgba(255, 252, 245, 0.95);
+    --text-primary: #2c241a;
+    --text-secondary: #5c4b34;
+    --accent: #8b5a2b;
+    --accent-light: #c49a6c;
+    --border-color: #f0e4d0;
+    --btn-bg: #2f241b;
+    --btn-hover: #503e2c;
+    --shadow: 0 25px 45px -12px rgba(0,0,0,0.2);
+    --header-bg: rgba(255, 252, 245, 0.85);
+    --glow-color: rgba(139, 90, 43, 0.3);
 }
 
-// YouTube MP3 Downloader
-async function downloadYoutube(url) {
-    try {
-        const apiUrl = `https://api-faa.my.id/faa/ytmp3?url=${encodeURIComponent(url)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.status) {
-            const r = data.result;
-            resultContent.innerHTML = `
-                <div class="youtube-result">
-                    <img src="${r.thumbnail}" class="youtube-thumb">
-                    <div class="youtube-info">
-                        <div class="youtube-title">🎵 ${r.title}</div>
-                        <div class="youtube-duration">⏱️ ${r.duration}</div>
-                    </div>
-                </div>
-                <audio controls class="audio-player" src="${r.mp3}"></audio>
-                <div class="download-links">
-                    <a href="${r.mp3}" download class="btn-small">⬇️ Download MP3</a>
-                </div>
-            `;
-            resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ MP3 siap!';
-        }
-    } catch(e) { statusDiv.innerHTML = `❌ Error: ${e.message}`; }
+body.dark {
+    --bg-gradient-start: #0f0f1a;
+    --bg-gradient-end: #1a1a2e;
+    --card-bg: rgba(30, 30, 50, 0.95);
+    --text-primary: #ececec;
+    --text-secondary: #b8b8c8;
+    --accent: #c9a87b;
+    --accent-light: #d4b48c;
+    --border-color: #2a2a3e;
+    --btn-bg: #c9a87b;
+    --btn-hover: #ddbb8f;
+    --header-bg: rgba(26, 26, 46, 0.9);
+    --shadow: 0 25px 45px -12px rgba(0,0,0,0.5);
+    --glow-color: rgba(201, 168, 123, 0.4);
 }
 
-// Snack Video Downloader (API placeholder)
-async function downloadSnackVideo(url) {
-    statusDiv.innerHTML = '🔄 API Snack Video sedang dalam pengembangan...';
-    resultContent.innerHTML = `
-        <div style="text-align:center; padding:2rem;">
-            <i class="fas fa-tools" style="font-size:3rem;"></i>
-            <p>Fitur Snack Video akan segera hadir!</p>
-            <p>API sedang disiapkan</p>
-        </div>
-    `;
-    resultContainer.style.display = 'block';
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-// Videy Downloader (API placeholder)
-async function downloadVidey(url) {
-    statusDiv.innerHTML = '🔄 API Videy sedang dalam pengembangan...';
-    resultContent.innerHTML = `
-        <div style="text-align:center; padding:2rem;">
-            <i class="fas fa-tools" style="font-size:3rem;"></i>
-            <p>Fitur Videy akan segera hadir!</p>
-            <p>API sedang disiapkan</p>
-        </div>
-    `;
-    resultContainer.style.display = 'block';
+/* ========== BACKGROUND EFFECTS KEREN ========== */
+.bg-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 50%, var(--glow-color) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: pulse 8s ease-in-out infinite;
 }
 
-// HD Photo Enhancer (DeepAI)
-async function enhancePhoto(file) {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    statusDiv.innerHTML = '<div class="loading-spinner"></div> Memproses ke HD...';
-    
-    try {
-        const response = await fetch('https://api.deepai.org/api/torch-srgan', {
-            method: 'POST',
-            headers: { 'api-key': 'quickstart-QUdJIGlzIGNvbWluZy4uLi4K' },
-            body: formData
-        });
-        const data = await response.json();
-        
-        if (data.output_url) {
-            resultContent.innerHTML = `
-                <div class="result-compare">
-                    <div>
-                        <p><strong>Sebelum</strong></p>
-                        <img src="${URL.createObjectURL(file)}" class="image-preview">
-                    </div>
-                    <div>
-                        <p><strong>Sesudah (HD)</strong></p>
-                        <img src="${data.output_url}" class="image-preview">
-                    </div>
-                </div>
-                <div class="download-links">
-                    <a href="${data.output_url}" download="enhanced.jpg" class="btn-small">⬇️ Download HD Photo</a>
-                </div>
-            `;
-            resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ Foto berhasil di-HD-kan!';
-        }
-    } catch(e) {
-        statusDiv.innerHTML = `❌ Error: ${e.message}`;
-        resultContent.innerHTML = `<p style="color:red;">Gagal memproses. Coba lagi.</p>`;
-        resultContainer.style.display = 'block';
-    }
+.bg-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 80% 80%, var(--glow-color) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+    animation: pulse 10s ease-in-out infinite reverse;
 }
 
-// Background Remover (Remove.bg)
-async function removeBackground(file) {
-    const formData = new FormData();
-    formData.append('image_file', file);
-    formData.append('size', 'auto');
-    
-    statusDiv.innerHTML = '<div class="loading-spinner"></div> Menghapus background...';
-    
-    try {
-        const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-            method: 'POST',
-            headers: { 'X-Api-Key': 'YOUR_REMOVE_BG_API_KEY' },
-            body: formData
-        });
-        
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            resultContent.innerHTML = `
-                <div class="result-compare">
-                    <div>
-                        <p><strong>Original</strong></p>
-                        <img src="${URL.createObjectURL(file)}" class="image-preview">
-                    </div>
-                    <div>
-                        <p><strong>Background Removed</strong></p>
-                        <img src="${url}" class="image-preview">
-                    </div>
-                </div>
-                <div class="download-links">
-                    <a href="${url}" download="nobg.png" class="btn-small">⬇️ Download No BG</a>
-                </div>
-            `;
-            resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ Background berhasil dihapus!';
-        } else {
-            throw new Error('Gagal hapus background');
-        }
-    } catch(e) {
-        statusDiv.innerHTML = `❌ Error: ${e.message}. Coba API key lain.`;
-        resultContent.innerHTML = `<p style="color:red;">Gunakan API key Remove.bg yang valid</p>`;
-        resultContainer.style.display = 'block';
-    }
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
 }
 
-// ========== MAIN PROCESS ==========
-downloadBtn.addEventListener('click', async () => {
-    const url = urlInput.value.trim();
-    
-    if (!currentPlatform) {
-        statusDiv.innerHTML = '⚠️ Pilih tools dulu dari menu ☰';
-        return;
-    }
-    
-    resultContainer.style.display = 'none';
-    
-    // Video Downloaders
-    if (currentPlatform === 'tiktok' && url) await downloadTikTok(url);
-    else if (currentPlatform === 'youtube' && url) await downloadYoutube(url);
-    else if (currentPlatform === 'snackvideo' && url) await downloadSnackVideo(url);
-    else if (currentPlatform === 'videy' && url) await downloadVidey(url);
-    
-    // Photo Tools
-    else if (currentPlatform === 'hdenhancer' && currentFile) await enhancePhoto(currentFile);
-    else if (currentPlatform === 'removebg' && currentFile) await removeBackground(currentFile);
-    
-    else {
-        statusDiv.innerHTML = '❌ Masukkan URL atau pilih file terlebih dahulu!';
-    }
-});
+.bg-book-deco {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.05;
+}
+.bg-book-deco i {
+    position: absolute;
+    font-size: 10rem;
+    color: var(--accent);
+}
 
-// Config Links
-document.getElementById('telegramBtn').href = 'https://t.me/LinkGroupKamu';
-document.getElementById('whatsappBtn').href = 'https://chat.whatsapp.com/Dq6B4ba0yhnJJEAij5rqFb';
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.menu-btn, .theme-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    width: 44px;
+    height: 44px;
+    border-radius: 60px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.menu-btn:hover, .theme-btn:hover {
+    transform: scale(1.05);
+    background: var(--accent-light);
+    color: white;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100%;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    z-index: 200;
+    padding: 5rem 1.5rem 2rem;
+    transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    box-shadow: 5px 0 30px rgba(0,0,0,0.3);
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+}
+.sidebar.open {
+    left: 0;
+}
+.sidebar h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 1rem;
+}
+.sidebar .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-radius: 60px;
+    background: rgba(0,0,0,0.03);
+    transition: 0.2s;
+    cursor: pointer;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+body.dark .sidebar .menu-item {
+    background: rgba(255,255,255,0.05);
+}
+.sidebar .menu-item:hover {
+    background: var(--accent-light);
+    color: #1e1a14;
+    transform: translateX(8px);
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 150;
+    display: none;
+}
+.overlay.show {
+    display: block;
+}
+
+.main-content {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 100px 2rem 3rem;
+    position: relative;
+    z-index: 10;
+}
+
+.slideshow-container {
+    position: relative;
+    border-radius: 40px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    aspect-ratio: 16 / 9;
+    max-height: 500px;
+}
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    border-radius: 40px;
+}
+.slide.active {
+    opacity: 1;
+}
+
+.info-panel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 60px;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.info-item i {
+    color: var(--accent);
+    width: 24px;
+}
+.clock {
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.social-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+.social-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 32px;
+    border-radius: 60px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+.telegram-btn {
+    background: #0088cc;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,136,204,0.3);
+}
+.telegram-btn:hover {
+    background: #006699;
+    transform: translateY(-3px);
+}
+.whatsapp-btn {
+    background: #25D366;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37,211,102,0.3);
+}
+.whatsapp-btn:hover {
+    background: #1da15a;
+    transform: translateY(-3px);
+}
+
+.downloader-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-gradient-start);
+    z-index: 300;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    padding: 100px 2rem 3rem;
+}
+body.dark .downloader-page {
+    background: var(--bg-gradient-start);
+}
+.downloader-page.open {
+    transform: translateX(0);
+}
+.close-downloader {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    width: 44px;
+    height: 44px;
+    border-radius: 60px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 310;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+.downloader-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 48px;
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+}
+.url-input {
+    width: 100%;
+    padding: 16px 24px;
+    border-radius: 60px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-gradient-start);
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin: 1rem 0;
+}
+.btn-dload {
+    background: var(--btn-bg);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 60px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+body.dark .btn-dload {
+    color: #1e1a14;
+}
+.btn-dload:hover {
+    background: var(--btn-hover);
+    transform: scale(1.02);
+}
+.platform-badge {
+    display: inline-block;
+    background: var(--accent-light);
+    padding: 5px 12px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    margin: 0 3px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 3rem;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* HASIL */
+#resultContainer {
+    margin-top: 2rem;
+    text-align: left;
+    background: rgba(0,0,0,0.05);
+    border-radius: 24px;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#resultContent video {
+    width: 100%;
+    max-height: 400px;
+    border-radius: 16px;
+}
+.result-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin: 1rem 0;
+}
+.result-stats div {
+    background: rgba(0,0,0,0.05);
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+}
+.download-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+.download-links .btn-small {
+    background: var(--btn-bg);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.caption-text {
+    background: rgba(0,0,0,0.03);
+    padding: 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+}
+.youtube-result {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.youtube-thumb {
+    width: 120px;
+    border-radius: 16px;
+}
+.youtube-title {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+.audio-player {
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 40px;
+}
+
+@media (max-width: 700px) {
+    .info-panel { flex-direction: column; align-items: flex-start; border-radius: 30px; }
+    .main-content { padding: 90px 1rem 2rem; }
+    .social-btn { padding: 10px 20px; font-size: 0.9rem; }
+    .youtube-thumb { width: 80px; }
+}
