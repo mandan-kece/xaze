@@ -38,7 +38,6 @@
 
 <!-- HALAMAN UTAMA (DASHBOARD) -->
 <div class="main-content" id="dashboard">
-    <!-- Slideshow gambar (tanpa teks) -->
     <div class="slideshow-container" id="slideshow">
         <img class="slide active" src="https://cdn.alfisy.my.id/direct/722581.jpeg" alt="Slide 1">
         <img class="slide" src="https://cdn.alfisy.my.id/direct/492067.jpeg" alt="Slide 2">
@@ -47,7 +46,6 @@
         <img class="slide" src="https://cdn.alfisy.my.id/direct/271922.jpeg" alt="Slide 5">
     </div>
 
-    <!-- Info panel: Jam, IP, Baterai (di bawah gambar) -->
     <div class="info-panel">
         <div class="info-item"><i class="fas fa-network-wired"></i> <span id="ipAddress">Mengambil IP...</span></div>
         <div class="info-item"><i class="fas fa-battery-full"></i> <span id="batteryLevel">Baterai: --%</span></div>
@@ -55,7 +53,6 @@
         <div class="info-item clock"><i class="far fa-clock"></i> <span id="liveClock">--:--:--</span></div>
     </div>
 
-    <!-- Dua button Telegram & WhatsApp -->
     <div class="social-buttons">
         <a href="https://t.me/usernamekamu" target="_blank" class="social-btn telegram-btn" id="telegramBtn">
             <i class="fab fa-telegram-plane"></i>Telegram XAZE
@@ -72,15 +69,15 @@
     <button class="close-downloader" id="closeDownloader"><i class="fas fa-times"></i></button>
     <div class="downloader-card">
         <h2><i class="fas fa-download"></i> Media Downloader</h2>
-        <p>Version: 1.7.8</p>
+        <p>Version: 1.8.0</p>
         <div id="selectedPlatformBadge" style="margin-bottom: 10px;">
             <span class="platform-badge">⚡ Belum pilih platform</span>
         </div>
-        <input type="text" class="url-input" id="urlInput" placeholder="Masukan link TikTok di sini...">
+        <input type="text" class="url-input" id="urlInput" placeholder="Masukan link YouTube / TikTok di sini...">
         <button class="btn-dload" id="downloadActionBtn"><i class="fas fa-cloud-download-alt"></i> Proses & Download</button>
         <div id="downloadStatus" style="margin-top: 1rem; font-size: 0.8rem;"></div>
         
-        <!-- HASIL DOWNLOADER TIKTOK -->
+        <!-- HASIL DOWNLOADER -->
         <div id="resultContainer" style="display: none;">
             <div id="resultContent"></div>
         </div>
