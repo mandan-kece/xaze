@@ -1,95 +1,206 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>XAZE Downloader | Simple & Fast No Ads</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="bg-book-deco">
-    <i class="fas fa-book" style="top: 15%; left: -5%;"></i>
-    <i class="fas fa-feather-alt" style="bottom: 5%; right: -3%;"></i>
-    <i class="fas fa-scroll" style="top: 60%; left: 85%;"></i>
-</div>
+// ========== SLIDESHOW (5 detik, tanpa teks) ==========
+let slides = document.querySelectorAll('#slideshow .slide');
+let currentSlide = 0;
+function nextSlide() {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add('active');
+}
+setInterval(nextSlide, 5000);
 
-<!-- Top Bar -->
-<div class="top-bar">
-    <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
-    <div style="font-family: 'Playfair Display'; font-weight: bold; letter-spacing: 1px;">XAZE DOWNLOADER</div>
-    <button class="theme-btn" id="themeBtn"><i class="fas fa-moon"></i></button>
-</div>
+// ========== JAM REAL TIME ==========
+function updateClock() {
+    const now = new Date();
+    document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID');
+    document.getElementById('timezone').innerText = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-<!-- Sidebar Menu (garis tiga) -->
-<div class="sidebar" id="sidebar">
-    <h3><i class="fas fa-download"></i> Downloader</h3>
-    <div class="menu-item" data-platform="facebook"><i class="fab fa-facebook-f"></i> Facebook Video</div>
-    <div class="menu-item" data-platform="instagram"><i class="fab fa-instagram"></i> Instagram Reels/Photo</div>
-    <div class="menu-item" data-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok No Watermark</div>
-    <div class="menu-item" data-platform="youtube"><i class="fab fa-youtube"></i> YouTube MP3/MP4</div>
-    <div class="menu-item" data-platform="twitter"><i class="fab fa-twitter"></i> Twitter/X Downloader</div>
-    <div class="menu-item" data-platform="pinterest"><i class="fab fa-pinterest"></i> Pinterest Save</div>
-    <hr style="margin: 1rem 0; border-color: var(--border-color);">
-    <div style="font-size: 0.7rem; text-align: center; margin-top: 2rem;">✨ Klik platform untuk buka halaman downloader</div>
-</div>
-<div class="overlay" id="overlay"></div>
+// ========== IP ADDRESS ==========
+async function fetchIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        document.getElementById('ipAddress').innerText = data.ip;
+    } catch(e) { document.getElementById('ipAddress').innerText = '192.168.x.x (lokal)'; }
+}
+fetchIP();
 
-<!-- HALAMAN UTAMA (DASHBOARD) -->
-<div class="main-content" id="dashboard">
-    <!-- Slideshow gambar (tanpa teks) -->
-    <div class="slideshow-container" id="slideshow">
-        <img class="slide active" src="https://cdn.alfisy.my.id/direct/722581.jpeg" alt="Slide 1">
-        <img class="slide" src="https://cdn.alfisy.my.id/direct/492067.jpeg" alt="Slide 2">
-        <img class="slide" src="https://cdn.alfisy.my.id/direct/670866.jpeg" alt="Slide 3">
-        <img class="slide" src="https://cdn.alfisy.my.id/direct/410229.jpeg" alt="Slide 4">
-        <img class="slide" src="https://cdn.alfisy.my.id/direct/271922.jpeg" alt="Slide 5">
-    </div>
+// ========== BATTERY ==========
+function getBatteryInfo() {
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(battery => {
+            function updateBatt() {
+                let level = Math.floor(battery.level * 100);
+                let icon = battery.charging ? '⚡🔋' : '🔋';
+                document.getElementById('batteryLevel').innerHTML = `${icon} ${level}% ${battery.charging ? '(Mengisi)' : ''}`;
+            }
+            updateBatt();
+            battery.addEventListener('levelchange', updateBatt);
+            battery.addEventListener('chargingchange', updateBatt);
+        });
+    } else {
+        document.getElementById('batteryLevel').innerHTML = '🔋 Baterai: N/A (desktop)';
+    }
+}
+getBatteryInfo();
 
-    <!-- Info panel: Jam, IP, Baterai (di bawah gambar) -->
-    <div class="info-panel">
-        <div class="info-item"><i class="fas fa-network-wired"></i> <span id="ipAddress">Mengambil IP...</span></div>
-        <div class="info-item"><i class="fas fa-battery-full"></i> <span id="batteryLevel">Baterai: --%</span></div>
-        <div class="info-item"><i class="fas fa-globe"></i> <span id="timezone">Loading...</span></div>
-        <div class="info-item clock"><i class="far fa-clock"></i> <span id="liveClock">--:--:--</span></div>
-    </div>
+// ========== SIDEBAR & DOWNLOADER PAGE ==========
+const menuBtn = document.getElementById('menuBtn');
+const sidebarEl = document.getElementById('sidebar');
+const overlayEl = document.getElementById('overlay');
+const downloaderPage = document.getElementById('downloaderPage');
+const closeDownloaderBtn = document.getElementById('closeDownloader');
 
-    <!-- Dua button Telegram & WhatsApp -->
-    <div class="social-buttons">
-        <a href="https://t.me/usernamekamu" target="_blank" class="social-btn telegram-btn" id="telegramBtn">
-            <i class="fab fa-telegram-plane"></i>Telegram XAZE
-        </a>
-        <a href="https://wa.me/6281234567890" target="_blank" class="social-btn whatsapp-btn" id="whatsappBtn">
-            <i class="fab fa-whatsapp"></i>Join Group XAZE
-        </a>
-    </div>
-    <footer>DEVELOPED BY FIKRI.Z | © 2026 Sungai Mandan.</footer>
-</div>
+function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+}
 
-<!-- HALAMAN DOWNLOADER (terpisah) -->
-<div class="downloader-page" id="downloaderPage">
-    <button class="close-downloader" id="closeDownloader"><i class="fas fa-times"></i></button>
-    <div class="downloader-card">
-        <h2><i class="fas fa-download"></i> Media Downloader</h2>
-        <p>Version: 1.7.8</p>
-        <div id="selectedPlatformBadge" style="margin-bottom: 10px;">
-            <span class="platform-badge">⚡ Belum pilih platform</span>
-        </div>
-        <input type="text" class="url-input" id="urlInput" placeholder="Masukan link TikTok di sini...">
-        <button class="btn-dload" id="downloadActionBtn"><i class="fas fa-cloud-download-alt"></i> Proses & Download</button>
-        <div id="downloadStatus" style="margin-top: 1rem; font-size: 0.8rem;"></div>
+menuBtn.addEventListener('click', () => {
+    sidebarEl.classList.toggle('open');
+    overlayEl.classList.toggle('show');
+});
+overlayEl.addEventListener('click', closeSidebar);
+
+// Ketika klik menu item (platform) -> tutup sidebar, buka halaman downloader
+const menuItems = document.querySelectorAll('.menu-item');
+const platformBadge = document.getElementById('selectedPlatformBadge');
+let currentPlatform = '';
+
+menuItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        const platform = item.getAttribute('data-platform');
+        currentPlatform = platform;
+        platformBadge.innerHTML = `<span class="platform-badge">📱 Platform: ${platform.toUpperCase()}</span>`;
+        closeSidebar();
+        downloaderPage.classList.add('open');
+    });
+});
+
+// Tutup halaman downloader
+closeDownloaderBtn.addEventListener('click', () => {
+    downloaderPage.classList.remove('open');
+});
+
+// ========== THEME TOGGLE ==========
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const icon = themeBtn.querySelector('i');
+    if(document.body.classList.contains('dark')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+    } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+    }
+});
+
+// ========== DOWNLOADER TIKTOK REAL ==========
+const downloadBtn = document.getElementById('downloadActionBtn');
+const urlInput = document.getElementById('urlInput');
+const statusDiv = document.getElementById('downloadStatus');
+const resultContainer = document.getElementById('resultContainer');
+const resultContent = document.getElementById('resultContent');
+
+// Fungsi download TikTok
+async function downloadTikTok(url) {
+    try {
+        const apiUrl = `https://api.nexray.eu.cc/downloader/tiktok?url=${encodeURIComponent(url)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
         
-        <!-- HASIL DOWNLOADER TIKTOK -->
-        <div id="resultContainer" style="display: none;">
-            <div id="resultContent"></div>
-        </div>
-    </div>
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.75rem;">
-        <i class="fas fa-shield-alt"></i>Simple & Fast, No Ads
-    </div>
-</div>
+        if (data.status === true) {
+            const r = data.result;
+            
+            const caption = r.title ? r.title.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }) : 'Tidak ada caption';
+            
+            resultContent.innerHTML = `
+                <video controls poster="${r.cover}">
+                    <source src="${r.data}" type="video/mp4">
+                    Browser tidak support video.
+                </video>
+                
+                <div class="caption-text">
+                    <i class="fas fa-quote-left"></i> ${caption}
+                </div>
+                
+                <div class="result-stats">
+                    <div><i class="fas fa-eye"></i> ${r.stats?.views || 'N/A'}</div>
+                    <div><i class="fas fa-heart"></i> ${r.stats?.likes || 'N/A'}</div>
+                    <div><i class="fas fa-comment"></i> ${r.stats?.comment || 'N/A'}</div>
+                    <div><i class="fas fa-share"></i> ${r.stats?.share || 'N/A'}</div>
+                    <div><i class="fas fa-download"></i> ${r.stats?.download || 'N/A'}</div>
+                </div>
+                
+                <div style="margin: 10px 0; font-size: 0.8rem;">
+                    <i class="fas fa-user"></i> <strong>${r.author?.nickname || r.author?.fullname || 'Unknown'}</strong><br>
+                    <i class="fas fa-clock"></i> Upload: ${r.taken_at || 'Tidak diketahui'}<br>
+                    <i class="fas fa-music"></i> Musik: ${r.music_info?.title || 'Tidak diketahui'}
+                </div>
+                
+                <div class="download-links">
+                    <a href="${r.data}" download class="btn-small"><i class="fas fa-download"></i> Download Video</a>
+                </div>
+            `;
+            resultContainer.style.display = 'block';
+            statusDiv.innerHTML = `<span style="color: green;">✅ Sukses! Video ditemukan.</span>`;
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            statusDiv.innerHTML = `<span style="color: red;">❌ Gagal: ${data.message || 'Link tidak valid'}</span>`;
+            resultContainer.style.display = 'none';
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+        resultContainer.style.display = 'none';
+    }
+}
 
-<script src="script.js"></script>
-</body>
-</html>
+// Main download process
+downloadBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+        statusDiv.innerHTML = '<span style="color:red;">❌ Masukkan URL dulu!</span>';
+        resultContainer.style.display = 'none';
+        return;
+    }
+    
+    if (!currentPlatform) {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ Pilih platform dulu dari menu ☰</span>';
+        resultContainer.style.display = 'none';
+        return;
+    }
+    
+    let detectedPlatform = currentPlatform;
+    if (url.includes('tiktok.com')) detectedPlatform = 'tiktok';
+    else if (url.includes('instagram.com')) detectedPlatform = 'instagram';
+    else if (url.includes('facebook.com') || url.includes('fb.watch')) detectedPlatform = 'facebook';
+    else if (url.includes('youtu.be') || url.includes('youtube.com')) detectedPlatform = 'youtube';
+    
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses link...';
+    resultContainer.style.display = 'none';
+    
+    if (detectedPlatform === 'tiktok') {
+        await downloadTikTok(url);
+    } else if (detectedPlatform === 'instagram') {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ API Instagram belum tersedia, menyusul!</span>';
+    } else if (detectedPlatform === 'facebook') {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ API Facebook belum tersedia, menyusul!</span>';
+    } else if (detectedPlatform === 'youtube') {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ API YouTube belum tersedia, menyusul!</span>';
+    } else {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ Platform belum didukung! Coba TikTok dulu.</span>';
+    }
+});
+
+// Config Link Telegram & WhatsApp
+document.getElementById('telegramBtn').href = 'https://t.me/LinkGroupKamu';
+document.getElementById('whatsappBtn').href = 'https://chat.whatsapp.com/Dq6B4ba0yhnJJEAij5rqFb';
