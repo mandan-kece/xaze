@@ -1,457 +1,250 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+// ========== SLIDESHOW ==========
+let slides = document.querySelectorAll('#slideshow .slide');
+let currentSlide = 0;
+function nextSlide() {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add('active');
+}
+setInterval(nextSlide, 5000);
+
+// ========== JAM ==========
+function updateClock() {
+    const now = new Date();
+    document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID');
+    document.getElementById('timezone').innerText = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ========== IP ==========
+async function fetchIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        document.getElementById('ipAddress').innerText = data.ip;
+    } catch(e) { document.getElementById('ipAddress').innerText = '192.168.x.x'; }
+}
+fetchIP();
+
+// ========== BATTERY ==========
+function getBatteryInfo() {
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(battery => {
+            function updateBatt() {
+                let level = Math.floor(battery.level * 100);
+                let icon = battery.charging ? '⚡🔋' : '🔋';
+                document.getElementById('batteryLevel').innerHTML = `${icon} ${level}% ${battery.charging ? '(Mengisi)' : ''}`;
+            }
+            updateBatt();
+            battery.addEventListener('levelchange', updateBatt);
+            battery.addEventListener('chargingchange', updateBatt);
+        });
+    } else {
+        document.getElementById('batteryLevel').innerHTML = '🔋 Baterai: N/A';
+    }
+}
+getBatteryInfo();
+
+// ========== SIDEBAR ==========
+const menuBtn = document.getElementById('menuBtn');
+const sidebarEl = document.getElementById('sidebar');
+const overlayEl = document.getElementById('overlay');
+const downloaderPage = document.getElementById('downloaderPage');
+const closeDownloaderBtn = document.getElementById('closeDownloader');
+
+function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
 }
 
-:root {
-    --bg-gradient-start: #f7f3e9;
-    --bg-gradient-end: #e8e0d3;
-    --card-bg: rgba(255, 252, 245, 0.95);
-    --text-primary: #2c241a;
-    --text-secondary: #5c4b34;
-    --accent: #8b5a2b;
-    --accent-light: #c49a6c;
-    --border-color: #f0e4d0;
-    --btn-bg: #2f241b;
-    --btn-hover: #503e2c;
-    --shadow: 0 25px 45px -12px rgba(0,0,0,0.2);
-    --header-bg: rgba(255, 252, 245, 0.85);
-    --glow-color: rgba(139, 90, 43, 0.3);
+menuBtn.addEventListener('click', () => {
+    sidebarEl.classList.toggle('open');
+    overlayEl.classList.toggle('show');
+});
+overlayEl.addEventListener('click', closeSidebar);
+
+const menuItems = document.querySelectorAll('.menu-item');
+const platformBadge = document.getElementById('selectedPlatformBadge');
+const toolsTitle = document.getElementById('toolsTitle');
+const toolsDesc = document.getElementById('toolsDesc');
+const urlInput = document.getElementById('urlInput');
+const downloadBtn = document.getElementById('downloadActionBtn');
+const statusDiv = document.getElementById('downloadStatus');
+const resultContainer = document.getElementById('resultContainer');
+const resultContent = document.getElementById('resultContent');
+
+let currentPlatform = '';
+let currentType = '';
+
+menuItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        currentPlatform = item.getAttribute('data-platform');
+        currentType = item.getAttribute('data-type') || '';
+        const platformName = item.textContent.trim();
+        
+        platformBadge.innerHTML = `<span class="platform-badge">📱 ${platformName}</span>`;
+        toolsTitle.innerHTML = `<i class="${item.querySelector('i').className}"></i> ${platformName}`;
+        
+        if (currentPlatform === 'youtube') {
+            toolsDesc.innerHTML = currentType === 'mp3' ? 'Download audio MP3 dari YouTube' : 'Download video MP4 dari YouTube';
+        } else if (currentPlatform === 'tiktok') {
+            toolsDesc.innerHTML = 'Download video TikTok tanpa watermark';
+        } else if (currentPlatform === 'pinterest') {
+            toolsDesc.innerHTML = 'Download gambar/video dari Pinterest';
+        }
+        
+        urlInput.value = '';
+        resultContainer.style.display = 'none';
+        closeSidebar();
+        downloaderPage.classList.add('open');
+    });
+});
+
+closeDownloaderBtn.addEventListener('click', () => {
+    downloaderPage.classList.remove('open');
+});
+
+// ========== THEME TOGGLE ==========
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const icon = themeBtn.querySelector('i');
+    icon.classList.toggle('fa-moon');
+    icon.classList.toggle('fa-sun');
+});
+
+// ========== API TIKTOK ==========
+async function downloadTikTok(url) {
+    try {
+        const apiUrl = `https://api.nexray.eu.cc/downloader/tiktok?url=${encodeURIComponent(url)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.status) {
+            const r = data.result;
+            resultContent.innerHTML = `
+                <video controls poster="${r.cover}" style="width:100%; border-radius:16px">
+                    <source src="${r.data}" type="video/mp4">
+                </video>
+                <div class="caption-text">📝 ${r.title || 'Tidak ada caption'}</div>
+                <div class="result-stats">
+                    <div>👁️ ${r.stats?.views || 'N/A'}</div>
+                    <div>❤️ ${r.stats?.likes || 'N/A'}</div>
+                    <div>💬 ${r.stats?.comment || 'N/A'}</div>
+                    <div>📤 ${r.stats?.share || 'N/A'}</div>
+                </div>
+                <div class="download-links">
+                    <a href="${r.data}" download class="btn-small"><i class="fas fa-download"></i> Download Video</a>
+                </div>
+            `;
+            resultContainer.style.display = 'block';
+            statusDiv.innerHTML = '✅ Sukses! Video siap download.';
+        } else {
+            statusDiv.innerHTML = '❌ Gagal ambil video. Cek link lagi.';
+        }
+    } catch(e) {
+        statusDiv.innerHTML = `❌ Error: ${e.message}`;
+    }
 }
 
-body.dark {
-    --bg-gradient-start: #0f0f1a;
-    --bg-gradient-end: #1a1a2e;
-    --card-bg: rgba(30, 30, 50, 0.95);
-    --text-primary: #ececec;
-    --text-secondary: #b8b8c8;
-    --accent: #c9a87b;
-    --accent-light: #d4b48c;
-    --border-color: #2a2a3e;
-    --btn-bg: #c9a87b;
-    --btn-hover: #ddbb8f;
-    --header-bg: rgba(26, 26, 46, 0.9);
-    --shadow: 0 25px 45px -12px rgba(0,0,0,0.5);
-    --glow-color: rgba(201, 168, 123, 0.4);
+// ========== API YOUTUBE MP3 ==========
+async function downloadYoutubeMP3(url) {
+    try {
+        const apiUrl = `https://api-faa.my.id/faa/ytmp3?url=${encodeURIComponent(url)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.status) {
+            const r = data.result;
+            resultContent.innerHTML = `
+                <div class="youtube-result">
+                    <img src="${r.thumbnail}" class="youtube-thumb">
+                    <div class="youtube-info">
+                        <div class="youtube-title">🎵 ${r.title}</div>
+                        <div class="youtube-duration">⏱️ ${r.duration}</div>
+                    </div>
+                </div>
+                <audio controls class="audio-player" src="${r.mp3}"></audio>
+                <div class="download-links">
+                    <a href="${r.mp3}" download class="btn-small"><i class="fas fa-download"></i> Download MP3</a>
+                </div>
+            `;
+            resultContainer.style.display = 'block';
+            statusDiv.innerHTML = '✅ MP3 siap download!';
+        } else {
+            statusDiv.innerHTML = '❌ Gagal ambil MP3. Cek link YouTube.';
+        }
+    } catch(e) {
+        statusDiv.innerHTML = `❌ Error: ${e.message}`;
+    }
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-    color: var(--text-primary);
-    min-height: 100vh;
-    transition: all 0.3s ease;
-    position: relative;
+// ========== API YOUTUBE MP4 (placeholder) ==========
+async function downloadYoutubeMP4(url) {
+    statusDiv.innerHTML = '🔄 Mencari video...';
+    resultContent.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+            <i class="fab fa-youtube" style="font-size:3rem; color:#ff0000;"></i>
+            <p style="margin-top:1rem;"><strong>Fitur YouTube MP4</strong></p>
+            <p>Sedang dalam pengembangan. API MP4 akan segera hadir!</p>
+            <p style="margin-top:1rem; font-size:0.8rem;">Sementara gunakan MP3 dulu ya 👍</p>
+        </div>
+    `;
+    resultContainer.style.display = 'block';
+    statusDiv.innerHTML = '⏳ Fitur MP4 menyusul!';
 }
 
-/* ========== BACKGROUND EFFECTS KEREN ========== */
-.bg-effect {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 20% 50%, var(--glow-color) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-    animation: pulse 8s ease-in-out infinite;
+// ========== API PINTEREST (placeholder) ==========
+async function downloadPinterest(url) {
+    statusDiv.innerHTML = '🔄 Mencari media...';
+    resultContent.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+            <i class="fab fa-pinterest" style="font-size:3rem; color:#e60023;"></i>
+            <p style="margin-top:1rem;"><strong>Pinterest Downloader</strong></p>
+            <p>API sedang dalam persiapan</p>
+            <p style="margin-top:1rem; font-size:0.8rem;">Akan segera hadir! 🔥</p>
+        </div>
+    `;
+    resultContainer.style.display = 'block';
+    statusDiv.innerHTML = '⏳ Fitur Pinterest menyusul!';
 }
 
-.bg-glow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 80% 80%, var(--glow-color) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-    animation: pulse 10s ease-in-out infinite reverse;
-}
+// ========== MAIN PROCESS ==========
+downloadBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim();
+    
+    if (!currentPlatform) {
+        statusDiv.innerHTML = '⚠️ Pilih platform dulu dari menu ☰';
+        return;
+    }
+    
+    if (!url) {
+        statusDiv.innerHTML = '❌ Masukkan URL dulu!';
+        return;
+    }
+    
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses...';
+    resultContainer.style.display = 'none';
+    
+    if (currentPlatform === 'tiktok') {
+        await downloadTikTok(url);
+    } 
+    else if (currentPlatform === 'youtube') {
+        if (currentType === 'mp3') {
+            await downloadYoutubeMP3(url);
+        } else {
+            await downloadYoutubeMP4(url);
+        }
+    }
+    else if (currentPlatform === 'pinterest') {
+        await downloadPinterest(url);
+    }
+    else {
+        statusDiv.innerHTML = '❌ Platform tidak dikenal';
+    }
+});
 
-@keyframes pulse {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(1.05); }
-}
-
-.bg-book-deco {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.05;
-}
-.bg-book-deco i {
-    position: absolute;
-    font-size: 10rem;
-    color: var(--accent);
-}
-
-.top-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    background: var(--header-bg);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.menu-btn, .theme-btn {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    width: 44px;
-    height: 44px;
-    border-radius: 60px;
-    font-size: 1.4rem;
-    cursor: pointer;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-.menu-btn:hover, .theme-btn:hover {
-    transform: scale(1.05);
-    background: var(--accent-light);
-    color: white;
-}
-
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: -320px;
-    width: 300px;
-    height: 100%;
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    z-index: 200;
-    padding: 5rem 1.5rem 2rem;
-    transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    box-shadow: 5px 0 30px rgba(0,0,0,0.3);
-    border-right: 1px solid var(--border-color);
-    overflow-y: auto;
-}
-.sidebar.open {
-    left: 0;
-}
-.sidebar h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    margin-bottom: 1.5rem;
-    color: var(--accent);
-    border-left: 4px solid var(--accent);
-    padding-left: 1rem;
-}
-.sidebar .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    border-radius: 60px;
-    background: rgba(0,0,0,0.03);
-    transition: 0.2s;
-    cursor: pointer;
-    color: var(--text-primary);
-    text-decoration: none;
-}
-body.dark .sidebar .menu-item {
-    background: rgba(255,255,255,0.05);
-}
-.sidebar .menu-item:hover {
-    background: var(--accent-light);
-    color: #1e1a14;
-    transform: translateX(8px);
-}
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 150;
-    display: none;
-}
-.overlay.show {
-    display: block;
-}
-
-.main-content {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 100px 2rem 3rem;
-    position: relative;
-    z-index: 10;
-}
-
-.slideshow-container {
-    position: relative;
-    border-radius: 40px;
-    overflow: hidden;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow);
-    aspect-ratio: 16 / 9;
-    max-height: 500px;
-}
-.slide {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
-    border-radius: 40px;
-}
-.slide.active {
-    opacity: 1;
-}
-
-.info-panel {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    background: var(--card-bg);
-    backdrop-filter: blur(8px);
-    border-radius: 60px;
-    padding: 1rem 2rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border-color);
-}
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-.info-item i {
-    color: var(--accent);
-    width: 24px;
-}
-.clock {
-    font-family: monospace;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.social-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-top: 0.5rem;
-}
-.social-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 32px;
-    border-radius: 60px;
-    font-weight: 700;
-    font-size: 1rem;
-    text-decoration: none;
-    transition: all 0.2s;
-    border: none;
-    cursor: pointer;
-}
-.telegram-btn {
-    background: #0088cc;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,136,204,0.3);
-}
-.telegram-btn:hover {
-    background: #006699;
-    transform: translateY(-3px);
-}
-.whatsapp-btn {
-    background: #25D366;
-    color: white;
-    box-shadow: 0 4px 12px rgba(37,211,102,0.3);
-}
-.whatsapp-btn:hover {
-    background: #1da15a;
-    transform: translateY(-3px);
-}
-
-.downloader-page {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg-gradient-start);
-    z-index: 300;
-    overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    padding: 100px 2rem 3rem;
-}
-body.dark .downloader-page {
-    background: var(--bg-gradient-start);
-}
-.downloader-page.open {
-    transform: translateX(0);
-}
-.close-downloader {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    width: 44px;
-    height: 44px;
-    border-radius: 60px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 310;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-}
-.downloader-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(8px);
-    border-radius: 48px;
-    padding: 2rem;
-    border: 1px solid var(--border-color);
-    text-align: center;
-    max-width: 700px;
-    margin: 0 auto;
-}
-.url-input {
-    width: 100%;
-    padding: 16px 24px;
-    border-radius: 60px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-gradient-start);
-    color: var(--text-primary);
-    font-size: 1rem;
-    margin: 1rem 0;
-}
-.btn-dload {
-    background: var(--btn-bg);
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 60px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-body.dark .btn-dload {
-    color: #1e1a14;
-}
-.btn-dload:hover {
-    background: var(--btn-hover);
-    transform: scale(1.02);
-}
-.platform-badge {
-    display: inline-block;
-    background: var(--accent-light);
-    padding: 5px 12px;
-    border-radius: 40px;
-    font-size: 0.7rem;
-    margin: 0 3px;
-}
-
-footer {
-    text-align: center;
-    margin-top: 3rem;
-    font-size: 0.7rem;
-    opacity: 0.7;
-}
-
-/* HASIL */
-#resultContainer {
-    margin-top: 2rem;
-    text-align: left;
-    background: rgba(0,0,0,0.05);
-    border-radius: 24px;
-    padding: 1rem;
-    animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-#resultContent video {
-    width: 100%;
-    max-height: 400px;
-    border-radius: 16px;
-}
-.result-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    margin: 1rem 0;
-}
-.result-stats div {
-    background: rgba(0,0,0,0.05);
-    padding: 5px 12px;
-    border-radius: 30px;
-    font-size: 0.75rem;
-}
-.download-links {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-}
-.download-links .btn-small {
-    background: var(--btn-bg);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 40px;
-    text-decoration: none;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-.caption-text {
-    background: rgba(0,0,0,0.03);
-    padding: 12px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    margin: 1rem 0;
-}
-.youtube-result {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-.youtube-thumb {
-    width: 120px;
-    border-radius: 16px;
-}
-.youtube-title {
-    font-weight: bold;
-    font-size: 0.95rem;
-}
-.audio-player {
-    width: 100%;
-    margin-top: 1rem;
-    border-radius: 40px;
-}
-
-@media (max-width: 700px) {
-    .info-panel { flex-direction: column; align-items: flex-start; border-radius: 30px; }
-    .main-content { padding: 90px 1rem 2rem; }
-    .social-btn { padding: 10px 20px; font-size: 0.9rem; }
-    .youtube-thumb { width: 80px; }
-}
+// Config Links (ganti sesuai keinginan)
+document.getElementById('telegramBtn').href = 'https://t.me/xazechannel';
+document.getElementById('whatsappBtn').href = 'https://chat.whatsapp.com/YourLink';
