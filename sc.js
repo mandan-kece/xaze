@@ -12,7 +12,7 @@ setInterval(nextSlide, 5000);
 function updateClock() {
     const now = new Date();
     document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID');
-    document.getElementById('timezone').innerText = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById('timezone').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -41,28 +41,28 @@ function getBatteryInfo() {
             battery.addEventListener('chargingchange', updateBatt);
         });
     } else {
-        document.getElementById('batteryLevel').innerHTML = '🔋 Baterai: N/A';
+        document.getElementById('batteryLevel').innerHTML = '🔋 N/A';
     }
 }
 getBatteryInfo();
 
 // ========== SIDEBAR ==========
 const menuBtn = document.getElementById('menuBtn');
-const sidebarEl = document.getElementById('sidebar');
-const overlayEl = document.getElementById('overlay');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
 const downloaderPage = document.getElementById('downloaderPage');
-const closeDownloaderBtn = document.getElementById('closeDownloader');
+const closeDownloader = document.getElementById('closeDownloader');
 
 function closeSidebar() {
-    sidebarEl.classList.remove('open');
-    overlayEl.classList.remove('show');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
 }
 
 menuBtn.addEventListener('click', () => {
-    sidebarEl.classList.toggle('open');
-    overlayEl.classList.toggle('show');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
 });
-overlayEl.addEventListener('click', closeSidebar);
+overlay.addEventListener('click', closeSidebar);
 
 const menuItems = document.querySelectorAll('.menu-item');
 const platformBadge = document.getElementById('selectedPlatformBadge');
@@ -78,20 +78,19 @@ let currentPlatform = '';
 let currentType = '';
 
 menuItems.forEach(item => {
-    item.addEventListener('click', (e) => {
+    item.addEventListener('click', () => {
         currentPlatform = item.getAttribute('data-platform');
         currentType = item.getAttribute('data-type') || '';
         const platformName = item.textContent.trim();
-        
         platformBadge.innerHTML = `<span class="platform-badge">📱 ${platformName}</span>`;
         toolsTitle.innerHTML = `<i class="${item.querySelector('i').className}"></i> ${platformName}`;
         
         if (currentPlatform === 'youtube') {
-            toolsDesc.innerHTML = currentType === 'mp3' ? 'Download audio MP3 dari YouTube' : 'Download video MP4 dari YouTube';
+            toolsDesc.innerHTML = currentType === 'mp3' ? 'Download MP3 dari YouTube' : 'Download MP4 dari YouTube (coming soon)';
         } else if (currentPlatform === 'tiktok') {
             toolsDesc.innerHTML = 'Download video TikTok tanpa watermark';
-        } else if (currentPlatform === 'pinterest') {
-            toolsDesc.innerHTML = 'Download gambar/video dari Pinterest';
+        } else {
+            toolsDesc.innerHTML = 'Download dari Pinterest (coming soon)';
         }
         
         urlInput.value = '';
@@ -101,7 +100,7 @@ menuItems.forEach(item => {
     });
 });
 
-closeDownloaderBtn.addEventListener('click', () => {
+closeDownloader.addEventListener('click', () => {
     downloaderPage.classList.remove('open');
 });
 
@@ -114,47 +113,117 @@ themeBtn.addEventListener('click', () => {
     icon.classList.toggle('fa-sun');
 });
 
-// ========== API TIKTOK ==========
+// ========== MUSIC PLAYER (1 LAGU, LOOP) ==========
+const audio = new Audio();
+audio.src = 'https://cdnn.ikyyxd.my.id/storage/068dcbc9ab9df63571349928818c1226.mp3?preview=true';
+audio.loop = true;
+
+const musicCover = document.getElementById('musicCover');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const playPauseIcon = document.getElementById('playPauseIcon');
+const currentTimeSpan = document.getElementById('currentTime');
+const durationSpan = document.getElementById('duration');
+const progressBar = document.getElementById('musicProgress');
+const progressFill = document.getElementById('progressFill');
+const overlayPlayIcon = document.getElementById('overlayPlayIcon');
+const musicOverlay = document.getElementById('musicOverlay');
+
+let isPlaying = false;
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateProgress() {
+    const current = audio.currentTime;
+    const duration = audio.duration;
+    if (!isNaN(duration)) {
+        currentTimeSpan.innerText = formatTime(current);
+        durationSpan.innerText = formatTime(duration);
+        const percent = (current / duration) * 100;
+        progressBar.value = percent;
+        progressFill.style.width = percent + '%';
+    }
+}
+
+function togglePlay() {
+    if (isPlaying) {
+        audio.pause();
+        musicCover.classList.remove('spinning');
+        playPauseIcon.className = 'fas fa-play';
+        overlayPlayIcon.className = 'fas fa-play';
+        isPlaying = false;
+    } else {
+        audio.play().catch(e => console.log('Autoplay dicegah'));
+        musicCover.classList.add('spinning');
+        playPauseIcon.className = 'fas fa-pause';
+        overlayPlayIcon.className = 'fas fa-pause';
+        isPlaying = true;
+    }
+}
+
+playPauseBtn.addEventListener('click', togglePlay);
+musicOverlay.addEventListener('click', togglePlay);
+
+progressBar.addEventListener('input', (e) => {
+    const duration = audio.duration;
+    if (!isNaN(duration)) {
+        const seekTime = (e.target.value / 100) * duration;
+        audio.currentTime = seekTime;
+        progressFill.style.width = e.target.value + '%';
+    }
+});
+
+audio.addEventListener('timeupdate', updateProgress);
+audio.addEventListener('loadedmetadata', updateProgress);
+audio.addEventListener('ended', () => {
+    // Loop sudah otomatis karena audio.loop = true
+    musicCover.classList.add('spinning');
+    playPauseIcon.className = 'fas fa-pause';
+    isPlaying = true;
+});
+
+// ========== API DOWNLOADER ==========
 async function downloadTikTok(url) {
     try {
         const apiUrl = `https://api.nexray.eu.cc/downloader/tiktok?url=${encodeURIComponent(url)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
+        const res = await fetch(apiUrl);
+        const data = await res.json();
         if (data.status) {
             const r = data.result;
             resultContent.innerHTML = `
                 <video controls poster="${r.cover}" style="width:100%; border-radius:16px">
                     <source src="${r.data}" type="video/mp4">
                 </video>
-                <div class="caption-text">📝 ${r.title || 'Tidak ada caption'}</div>
+                <div class="caption-text">📝 ${r.title || 'No caption'}</div>
                 <div class="result-stats">
-                    <div>👁️ ${r.stats?.views || 'N/A'}</div>
-                    <div>❤️ ${r.stats?.likes || 'N/A'}</div>
-                    <div>💬 ${r.stats?.comment || 'N/A'}</div>
-                    <div>📤 ${r.stats?.share || 'N/A'}</div>
+                    <div>👁️ ${r.stats?.views}</div>
+                    <div>❤️ ${r.stats?.likes}</div>
+                    <div>💬 ${r.stats?.comment}</div>
+                    <div>📤 ${r.stats?.share}</div>
                 </div>
                 <div class="download-links">
                     <a href="${r.data}" download class="btn-small"><i class="fas fa-download"></i> Download Video</a>
                 </div>
             `;
             resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ Sukses! Video siap download.';
+            statusDiv.innerHTML = '✅ Sukses!';
         } else {
-            statusDiv.innerHTML = '❌ Gagal ambil video. Cek link lagi.';
+            statusDiv.innerHTML = '❌ Gagal ambil video';
         }
     } catch(e) {
         statusDiv.innerHTML = `❌ Error: ${e.message}`;
     }
 }
 
-// ========== API YOUTUBE MP3 ==========
 async function downloadYoutubeMP3(url) {
     try {
         const apiUrl = `https://api-faa.my.id/faa/ytmp3?url=${encodeURIComponent(url)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
+        const res = await fetch(apiUrl);
+        const data = await res.json();
         if (data.status) {
             const r = data.result;
             resultContent.innerHTML = `
@@ -171,190 +240,47 @@ async function downloadYoutubeMP3(url) {
                 </div>
             `;
             resultContainer.style.display = 'block';
-            statusDiv.innerHTML = '✅ MP3 siap download!';
+            statusDiv.innerHTML = '✅ MP3 siap!';
         } else {
-            statusDiv.innerHTML = '❌ Gagal ambil MP3. Cek link YouTube.';
+            statusDiv.innerHTML = '❌ Gagal ambil MP3';
         }
     } catch(e) {
         statusDiv.innerHTML = `❌ Error: ${e.message}`;
     }
 }
 
-// ========== API YOUTUBE MP4 (placeholder) ==========
-async function downloadYoutubeMP4(url) {
-    statusDiv.innerHTML = '🔄 Mencari video...';
-    resultContent.innerHTML = `
-        <div style="text-align:center; padding:2rem;">
-            <i class="fab fa-youtube" style="font-size:3rem; color:#ff0000;"></i>
-            <p style="margin-top:1rem;"><strong>Fitur YouTube MP4</strong></p>
-            <p>Sedang dalam pengembangan. API MP4 akan segera hadir!</p>
-            <p style="margin-top:1rem; font-size:0.8rem;">Sementara gunakan MP3 dulu ya 👍</p>
-        </div>
-    `;
+function downloadYoutubeMP4(url) {
+    resultContent.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fab fa-youtube" style="font-size:2rem;"></i><p>Fitur MP4 menyusul!</p></div>`;
     resultContainer.style.display = 'block';
-    statusDiv.innerHTML = '⏳ Fitur MP4 menyusul!';
+    statusDiv.innerHTML = '⏳ Fitur MP4 segera hadir';
 }
 
-// ========== API PINTEREST (placeholder) ==========
-async function downloadPinterest(url) {
-    statusDiv.innerHTML = '🔄 Mencari media...';
-    resultContent.innerHTML = `
-        <div style="text-align:center; padding:2rem;">
-            <i class="fab fa-pinterest" style="font-size:3rem; color:#e60023;"></i>
-            <p style="margin-top:1rem;"><strong>Pinterest Downloader</strong></p>
-            <p>API sedang dalam persiapan</p>
-            <p style="margin-top:1rem; font-size:0.8rem;">Akan segera hadir! 🔥</p>
-        </div>
-    `;
+function downloadPinterest(url) {
+    resultContent.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fab fa-pinterest" style="font-size:2rem;"></i><p>Fitur Pinterest menyusul!</p></div>`;
     resultContainer.style.display = 'block';
-    statusDiv.innerHTML = '⏳ Fitur Pinterest menyusul!';
+    statusDiv.innerHTML = '⏳ Fitur Pinterest segera hadir';
 }
 
-// ========== MAIN PROCESS ==========
 downloadBtn.addEventListener('click', async () => {
     const url = urlInput.value.trim();
-    
     if (!currentPlatform) {
-        statusDiv.innerHTML = '⚠️ Pilih platform dulu dari menu ☰';
+        statusDiv.innerHTML = '⚠️ Pilih platform dulu';
         return;
     }
-    
     if (!url) {
-        statusDiv.innerHTML = '❌ Masukkan URL dulu!';
+        statusDiv.innerHTML = '❌ Masukkan URL';
         return;
     }
-    
     statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses...';
     resultContainer.style.display = 'none';
     
-    if (currentPlatform === 'tiktok') {
-        await downloadTikTok(url);
-    } 
-    else if (currentPlatform === 'youtube') {
-        if (currentType === 'mp3') {
-            await downloadYoutubeMP3(url);
-        } else {
-            await downloadYoutubeMP4(url);
-        }
-    }
-    else if (currentPlatform === 'pinterest') {
-        await downloadPinterest(url);
-    }
-    else {
-        statusDiv.innerHTML = '❌ Platform tidak dikenal';
-    }
+    if (currentPlatform === 'tiktok') await downloadTikTok(url);
+    else if (currentPlatform === 'youtube' && currentType === 'mp3') await downloadYoutubeMP3(url);
+    else if (currentPlatform === 'youtube' && currentType === 'mp4') downloadYoutubeMP4(url);
+    else if (currentPlatform === 'pinterest') downloadPinterest(url);
+    else statusDiv.innerHTML = '❌ Platform tidak dikenal';
 });
 
-// ========== MUSIC PLAYER PREVIEW (TERPISAH) ==========
-const audioPreview = new Audio();
-// Ganti URL MP3 sesuai keinginan lo
-audioPreview.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
-audioPreview.loop = false;
-
-const musicCover = document.getElementById('musicCover');
-const musicTitle = document.getElementById('musicTitle');
-const musicArtist = document.getElementById('musicArtist');
-const musicDurationText = document.getElementById('musicDurationText');
-const musicProgressSmall = document.getElementById('musicProgressSmall');
-const musicPlayBtn = document.getElementById('musicPlayBtn');
-const musicPlayIcon = document.getElementById('musicPlayIcon');
-
-let isMusicPlaying = false;
-
-// Info lagu (bisa lo ganti sendiri)
-const songList = [
-    { title: 'Lofi Study Beats', artist: 'Chillhop Music', cover: 'https://cdn.pixabay.com/photo/2016/12/18/13/45/vinyl-1915773_640.png', url: 'https://cdnn.ikyyxd.my.id/storage/068dcbc9ab9df63571349928818c1226.mp3?preview=true' },
-    { title: 'Jazz Night', artist: 'Coffee Shop Jazz', cover: 'https://cdn.pixabay.com/photo/2013/07/13/11/46/record-158540_640.png', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-    { title: 'Electronic Dreams', artist: 'Synthwave Pro', cover: 'https://cdn.pixabay.com/photo/2014/04/03/11/53/record-312209_640.png', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }
-];
-
-let currentSongIndex = 0;
-
-function loadSong(index) {
-    const song = songList[index];
-    musicTitle.textContent = song.title;
-    musicArtist.textContent = song.artist;
-    musicCover.src = song.cover;
-    audioPreview.src = song.url;
-    audioPreview.currentTime = 0;
-    if (isMusicPlaying) {
-        audioPreview.play().catch(e => console.log('Autoplay dicegah'));
-        musicCover.classList.add('spinning');
-    } else {
-        musicCover.classList.remove('spinning');
-    }
-    updateMusicTimer();
-}
-
-function updateMusicTimer() {
-    const current = audioPreview.currentTime;
-    const duration = audioPreview.duration;
-    
-    if (isNaN(duration)) {
-        musicDurationText.textContent = '00:00 / 00:00';
-        musicProgressSmall.value = 0;
-        return;
-    }
-    
-    const formatTime = (time) => {
-        const minutes = Math.floor(time / 60);
-        const seconds = Math.floor(time % 60);
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-    
-    musicDurationText.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-    musicProgressSmall.value = (current / duration) * 100;
-}
-
-audioPreview.addEventListener('timeupdate', updateMusicTimer);
-audioPreview.addEventListener('loadedmetadata', updateMusicTimer);
-
-musicProgressSmall.addEventListener('input', (e) => {
-    const duration = audioPreview.duration;
-    if (!isNaN(duration)) {
-        audioPreview.currentTime = (e.target.value / 100) * duration;
-    }
-});
-
-musicPlayBtn.addEventListener('click', () => {
-    if (isMusicPlaying) {
-        audioPreview.pause();
-        musicCover.classList.remove('spinning');
-        musicPlayIcon.className = 'fas fa-play';
-        isMusicPlaying = false;
-    } else {
-        audioPreview.play().catch(e => {
-            console.log('Autoplay dicegah browser, user harus klik manual');
-        });
-        musicCover.classList.add('spinning');
-        musicPlayIcon.className = 'fas fa-pause';
-        isMusicPlaying = true;
-    }
-});
-
-audioPreview.addEventListener('ended', () => {
-    // Ganti ke lagu berikutnya
-    currentSongIndex = (currentSongIndex + 1) % songList.length;
-    loadSong(currentSongIndex);
-    audioPreview.play().catch(e => console.log('Auto next gagal'));
-    musicCover.classList.add('spinning');
-    musicPlayIcon.className = 'fas fa-pause';
-    isMusicPlaying = true;
-});
-
-// Load lagu pertama
-loadSong(0);
-
-// Klik cover untuk ganti lagu (opsional)
-musicCover.addEventListener('click', () => {
-    currentSongIndex = (currentSongIndex + 1) % songList.length;
-    loadSong(currentSongIndex);
-    if (isMusicPlaying) {
-        audioPreview.play();
-        musicCover.classList.add('spinning');
-    }
-});
-
-// Config Links (ganti sesuai keinginan)
+// Config Links
 document.getElementById('telegramBtn').href = 'https://t.me/xazechannel';
 document.getElementById('whatsappBtn').href = 'https://chat.whatsapp.com/YourLink';
