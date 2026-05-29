@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>XAZE Downloader | Simple & Fast No Ads</title>
+    <title>XAZE Downloader | All in One Tools</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -22,17 +22,22 @@
     <button class="theme-btn" id="themeBtn"><i class="fas fa-moon"></i></button>
 </div>
 
-<!-- Sidebar Menu (garis tiga) -->
+<!-- Sidebar Menu -->
 <div class="sidebar" id="sidebar">
     <h3><i class="fas fa-download"></i> Downloader</h3>
-    <div class="menu-item" data-platform="facebook"><i class="fab fa-facebook-f"></i> Facebook Video</div>
-    <div class="menu-item" data-platform="instagram"><i class="fab fa-instagram"></i> Instagram Reels/Photo</div>
     <div class="menu-item" data-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok No Watermark</div>
     <div class="menu-item" data-platform="youtube"><i class="fab fa-youtube"></i> YouTube MP3/MP4</div>
-    <div class="menu-item" data-platform="twitter"><i class="fab fa-twitter"></i> Twitter/X Downloader</div>
-    <div class="menu-item" data-platform="pinterest"><i class="fab fa-pinterest"></i> Pinterest Save</div>
-    <hr style="margin: 1rem 0; border-color: var(--border-color);">
-    <div style="font-size: 0.7rem; text-align: center; margin-top: 2rem;">✨ Klik platform untuk buka halaman downloader</div>
+    <div class="menu-item" data-platform="snackvideo"><i class="fas fa-video"></i> Snack Video</div>
+    <div class="menu-item" data-platform="videy"><i class="fas fa-film"></i> Videy Downloader</div>
+    <div class="menu-item" data-platform="instagram"><i class="fab fa-instagram"></i> Instagram (soon)</div>
+    <div class="menu-item" data-platform="facebook"><i class="fab fa-facebook-f"></i> Facebook (soon)</div>
+    
+    <h3 style="margin-top: 2rem;"><i class="fas fa-magic"></i> Photo Tools</h3>
+    <div class="menu-item" data-platform="hdenhancer"><i class="fas fa-star"></i> HD Photo Enhancer</div>
+    <div class="menu-item" data-platform="removebg"><i class="fas fa-eraser"></i> Background Remover</div>
+    
+    <hr style="margin: 1rem 0;">
+    <div style="font-size: 0.7rem; text-align: center;">✨ Klik tools yang ingin digunakan</div>
 </div>
 <div class="overlay" id="overlay"></div>
 
@@ -64,26 +69,36 @@
     <footer>DEVELOPED BY FIKRI.Z | © 2026 Sungai Mandan.</footer>
 </div>
 
-<!-- HALAMAN DOWNLOADER (terpisah) -->
+<!-- HALAMAN DOWNLOADER/TOOLS -->
 <div class="downloader-page" id="downloaderPage">
     <button class="close-downloader" id="closeDownloader"><i class="fas fa-times"></i></button>
     <div class="downloader-card">
-        <h2><i class="fas fa-download"></i> Media Downloader</h2>
-        <p>Version: 1.8.0</p>
+        <h2 id="toolsTitle"><i class="fas fa-download"></i> Media Downloader</h2>
+        <p id="toolsDesc">Version: 2.0.0 | All in One Tools</p>
         <div id="selectedPlatformBadge" style="margin-bottom: 10px;">
-            <span class="platform-badge">⚡ Belum pilih platform</span>
+            <span class="platform-badge">⚡ Pilih tools dari menu</span>
         </div>
-        <input type="text" class="url-input" id="urlInput" placeholder="Masukan link YouTube / TikTok di sini...">
-        <button class="btn-dload" id="downloadActionBtn"><i class="fas fa-cloud-download-alt"></i> Proses & Download</button>
+        
+        <!-- Input untuk downloader video -->
+        <input type="text" class="url-input" id="urlInput" placeholder="Masukan link video di sini..." style="display: none;">
+        
+        <!-- Input untuk upload foto (HD Enhancer & Remove BG) -->
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <div id="uploadArea" style="display: none; border: 2px dashed var(--accent); border-radius: 30px; padding: 2rem; margin: 1rem 0; cursor: pointer;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem;"></i>
+            <p>Klik atau drag foto ke sini</p>
+        </div>
+        
+        <button class="btn-dload" id="downloadActionBtn"><i class="fas fa-play"></i> Proses</button>
         <div id="downloadStatus" style="margin-top: 1rem; font-size: 0.8rem;"></div>
         
-        <!-- HASIL DOWNLOADER -->
+        <!-- HASIL -->
         <div id="resultContainer" style="display: none;">
             <div id="resultContent"></div>
         </div>
     </div>
     <div style="text-align: center; margin-top: 2rem; font-size: 0.75rem;">
-        <i class="fas fa-shield-alt"></i>Simple & Fast, No Ads
+        <i class="fas fa-shield-alt"></i> Simple & Fast, No Ads
     </div>
 </div>
 
