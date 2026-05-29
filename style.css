@@ -370,8 +370,8 @@ body.dark .sidebar .menu-item {
 
 .progress-wrapper {
     position: relative;
-    flex: 1;
-    height: 250px;
+    flex: 8;
+    height: 4px;
     background: rgba(0,0,0,0.15);
     border-radius: 10px;
     cursor: pointer;
