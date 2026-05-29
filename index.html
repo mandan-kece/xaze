@@ -23,7 +23,7 @@
 <!-- Top Bar -->
 <div class="top-bar">
     <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
-    <div style="font-family: 'Playfair Display'; font-weight: bold; letter-spacing: 1px;">XAZE DOWNLOADER</div>
+    <div class="logo">XAZE DOWNLOADER</div>
     <button class="theme-btn" id="themeBtn"><i class="fas fa-moon"></i></button>
 </div>
 
@@ -42,13 +42,14 @@
     <div class="menu-item" data-platform="pinterest" data-type="">
         <i class="fab fa-pinterest"></i> Pinterest Downloader
     </div>
-    <hr style="margin: 1rem 0;">
-    <div style="font-size: 0.7rem; text-align: center;">✨ Klik platform untuk download</div>
+    <hr>
+    <div class="menu-footer">✨ Klik platform untuk download</div>
 </div>
 <div class="overlay" id="overlay"></div>
 
 <!-- DASHBOARD -->
 <div class="main-content" id="dashboard">
+    <!-- Slideshow -->
     <div class="slideshow-container" id="slideshow">
         <img class="slide active" src="https://cdn.alfisy.my.id/direct/722581.jpeg" alt="Slide 1">
         <img class="slide" src="https://cdn.alfisy.my.id/direct/492067.jpeg" alt="Slide 2">
@@ -57,22 +58,7 @@
         <img class="slide" src="https://cdn.alfisy.my.id/direct/271922.jpeg" alt="Slide 5">
     </div>
 
-<!-- MUSIC PLAYER TERPISAH (Preview Lagu) -->
-<div class="music-player-section" id="musicPlayerSection">
-    <div class="music-left">
-        <img src="https://cdn.pixabay.com/photo/2016/12/18/13/45/vinyl-1915773_640.png" alt="cover" class="music-cover" id="musicCover">
-        <div class="music-info">
-            <span class="music-title" id="musicTitle">Lofi Study Beats</span>
-            <span class="music-artist" id="musicArtist">Chillhop Music</span>
-        </div>
-    </div>
-    <div class="music-right-control">
-        <span class="music-duration" id="musicDurationText">00:00 / 00:00</span>
-        <input type="range" id="musicProgressSmall" class="music-progress-small" value="0" min="0" max="100" step="0.1">
-        <button class="music-play-btn" id="musicPlayBtn"><i class="fas fa-play" id="musicPlayIcon"></i></button>
-    </div>
-</div>
-
+    <!-- Info Panel -->
     <div class="info-panel">
         <div class="info-item"><i class="fas fa-network-wired"></i> <span id="ipAddress">Mengambil IP...</span></div>
         <div class="info-item"><i class="fas fa-battery-full"></i> <span id="batteryLevel">Baterai: --%</span></div>
@@ -80,6 +66,34 @@
         <div class="info-item clock"><i class="far fa-clock"></i> <span id="liveClock">--:--:--</span></div>
     </div>
 
+    <!-- MUSIC PLAYER (TERPISAH, FULL CUSTOM) -->
+    <div class="music-card">
+        <div class="music-cover-area">
+            <img src="https://cdn.pixabay.com/photo/2016/12/18/13/45/vinyl-1915773_640.png" alt="cover" class="music-cover-img" id="musicCover">
+            <div class="music-overlay" id="musicOverlay">
+                <i class="fas fa-play" id="overlayPlayIcon"></i>
+            </div>
+        </div>
+        <div class="music-info-area">
+            <div class="music-title" id="musicTitle">Lofi Study Beats</div>
+            <div class="music-artist" id="musicArtist">Chillhop Music</div>
+            <div class="music-progress-area">
+                <span class="music-current-time" id="currentTime">00:00</span>
+                <div class="progress-wrapper">
+                    <input type="range" id="musicProgress" class="music-progress-custom" value="0" min="0" max="100" step="0.1">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="music-duration" id="duration">00:00</span>
+            </div>
+        </div>
+        <div class="music-controls">
+            <button class="music-btn" id="playPauseBtn">
+                <i class="fas fa-play" id="playPauseIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Social Buttons -->
     <div class="social-buttons">
         <a href="#" target="_blank" class="social-btn telegram-btn" id="telegramBtn">
             <i class="fab fa-telegram-plane"></i>Telegram XAZE
@@ -97,22 +111,17 @@
     <div class="downloader-card">
         <h2 id="toolsTitle"><i class="fas fa-download"></i> Media Downloader</h2>
         <p id="toolsDesc">Tempel link, klik proses</p>
-        <div id="selectedPlatformBadge" style="margin-bottom: 10px;">
+        <div id="selectedPlatformBadge">
             <span class="platform-badge">⚡ Pilih platform dari menu</span>
         </div>
-        
         <input type="text" class="url-input" id="urlInput" placeholder="Masukan link di sini...">
-        
         <button class="btn-dload" id="downloadActionBtn"><i class="fas fa-play"></i> Proses & Download</button>
-        <div id="downloadStatus" style="margin-top: 1rem; font-size: 0.8rem;"></div>
-        
+        <div id="downloadStatus"></div>
         <div id="resultContainer" style="display: none;">
             <div id="resultContent"></div>
         </div>
     </div>
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.75rem;">
-        <i class="fas fa-shield-alt"></i> Simple & Fast, No Ads
-    </div>
+    <div class="footer-note">Simple & Fast, No Ads</div>
 </div>
 
 <script src="sc.js"></script>
