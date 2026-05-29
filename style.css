@@ -457,6 +457,57 @@ footer {
     }
 }
 
+/* Upload Area */
+#uploadArea {
+    transition: all 0.3s ease;
+}
+#uploadArea:hover {
+    background: var(--accent-light);
+    color: white;
+    border-color: white;
+}
+
+/* Preview Image */
+.image-preview {
+    max-width: 100%;
+    border-radius: 20px;
+    margin: 1rem 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.result-compare {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.result-compare div {
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+}
+
+.result-compare img {
+    width: 100%;
+    border-radius: 16px;
+}
+
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 @media (max-width: 700px) {
     .info-panel { flex-direction: column; align-items: flex-start; border-radius: 30px; }
     .main-content { padding: 90px 1rem 2rem; }
