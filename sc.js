@@ -1,4 +1,4 @@
-// ========== SLIDESHOW (5 detik, tanpa teks) ==========
+// ========== SLIDESHOW (5 detik) ==========
 let slides = document.querySelectorAll('#slideshow .slide');
 let currentSlide = 0;
 function nextSlide() {
@@ -64,7 +64,6 @@ menuBtn.addEventListener('click', () => {
 });
 overlayEl.addEventListener('click', closeSidebar);
 
-// Ketika klik menu item (platform) -> tutup sidebar, buka halaman downloader
 const menuItems = document.querySelectorAll('.menu-item');
 const platformBadge = document.getElementById('selectedPlatformBadge');
 let currentPlatform = '';
@@ -79,7 +78,6 @@ menuItems.forEach(item => {
     });
 });
 
-// Tutup halaman downloader
 closeDownloaderBtn.addEventListener('click', () => {
     downloaderPage.classList.remove('open');
 });
@@ -98,7 +96,7 @@ themeBtn.addEventListener('click', () => {
     }
 });
 
-// ========== DOWNLOADER TIKTOK REAL ==========
+// ========== DOWNLOADER ==========
 const downloadBtn = document.getElementById('downloadActionBtn');
 const urlInput = document.getElementById('urlInput');
 const statusDiv = document.getElementById('downloadStatus');
@@ -114,7 +112,6 @@ async function downloadTikTok(url) {
         
         if (data.status === true) {
             const r = data.result;
-            
             const caption = r.title ? r.title.replace(/[&<>]/g, function(m) {
                 if (m === '&') return '&amp;';
                 if (m === '<') return '&lt;';
@@ -127,11 +124,7 @@ async function downloadTikTok(url) {
                     <source src="${r.data}" type="video/mp4">
                     Browser tidak support video.
                 </video>
-                
-                <div class="caption-text">
-                    <i class="fas fa-quote-left"></i> ${caption}
-                </div>
-                
+                <div class="caption-text"><i class="fas fa-quote-left"></i> ${caption}</div>
                 <div class="result-stats">
                     <div><i class="fas fa-eye"></i> ${r.stats?.views || 'N/A'}</div>
                     <div><i class="fas fa-heart"></i> ${r.stats?.likes || 'N/A'}</div>
@@ -139,13 +132,11 @@ async function downloadTikTok(url) {
                     <div><i class="fas fa-share"></i> ${r.stats?.share || 'N/A'}</div>
                     <div><i class="fas fa-download"></i> ${r.stats?.download || 'N/A'}</div>
                 </div>
-                
                 <div style="margin: 10px 0; font-size: 0.8rem;">
                     <i class="fas fa-user"></i> <strong>${r.author?.nickname || r.author?.fullname || 'Unknown'}</strong><br>
                     <i class="fas fa-clock"></i> Upload: ${r.taken_at || 'Tidak diketahui'}<br>
                     <i class="fas fa-music"></i> Musik: ${r.music_info?.title || 'Tidak diketahui'}
                 </div>
-                
                 <div class="download-links">
                     <a href="${r.data}" download class="btn-small"><i class="fas fa-download"></i> Download Video</a>
                 </div>
@@ -155,6 +146,45 @@ async function downloadTikTok(url) {
             resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             statusDiv.innerHTML = `<span style="color: red;">❌ Gagal: ${data.message || 'Link tidak valid'}</span>`;
+            resultContainer.style.display = 'none';
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+        resultContainer.style.display = 'none';
+    }
+}
+
+// ========== FUNGSI YOUTUBE MP3 (BARU) ==========
+async function downloadYoutubeMP3(url) {
+    try {
+        const apiUrl = `https://api-faa.my.id/faa/ytmp3?url=${encodeURIComponent(url)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.status === true) {
+            const r = data.result;
+            
+            resultContent.innerHTML = `
+                <div class="youtube-result">
+                    <img src="${r.thumbnail}" class="youtube-thumb" alt="thumbnail">
+                    <div class="youtube-info">
+                        <div class="youtube-title"><i class="fab fa-youtube"></i> ${r.title}</div>
+                        <div class="youtube-duration"><i class="far fa-clock"></i> ${r.duration}</div>
+                    </div>
+                </div>
+                <audio controls class="audio-player">
+                    <source src="${r.mp3}" type="audio/mpeg">
+                    Browser tidak support audio.
+                </audio>
+                <div class="download-links" style="margin-top: 1rem;">
+                    <a href="${r.mp3}" download class="btn-small"><i class="fas fa-download"></i> Download MP3</a>
+                </div>
+            `;
+            resultContainer.style.display = 'block';
+            statusDiv.innerHTML = `<span style="color: green;">✅ Sukses! MP3 siap download.</span>`;
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            statusDiv.innerHTML = `<span style="color: red;">❌ Gagal: ${data.message || 'Link YouTube tidak valid'}</span>`;
             resultContainer.style.display = 'none';
         }
     } catch (error) {
@@ -179,25 +209,25 @@ downloadBtn.addEventListener('click', async () => {
         return;
     }
     
-    let detectedPlatform = currentPlatform;
-    if (url.includes('tiktok.com')) detectedPlatform = 'tiktok';
-    else if (url.includes('instagram.com')) detectedPlatform = 'instagram';
-    else if (url.includes('facebook.com') || url.includes('fb.watch')) detectedPlatform = 'facebook';
-    else if (url.includes('youtu.be') || url.includes('youtube.com')) detectedPlatform = 'youtube';
-    
     statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses link...';
     resultContainer.style.display = 'none';
     
-    if (detectedPlatform === 'tiktok') {
+    // YouTube MP3
+    if (currentPlatform === 'youtube' || url.includes('youtu.be') || url.includes('youtube.com')) {
+        await downloadYoutubeMP3(url);
+    }
+    // TikTok
+    else if (currentPlatform === 'tiktok' || url.includes('tiktok.com')) {
         await downloadTikTok(url);
-    } else if (detectedPlatform === 'instagram') {
+    }
+    else if (currentPlatform === 'instagram') {
         statusDiv.innerHTML = '<span style="color:orange;">⚠️ API Instagram belum tersedia, menyusul!</span>';
-    } else if (detectedPlatform === 'facebook') {
+    }
+    else if (currentPlatform === 'facebook') {
         statusDiv.innerHTML = '<span style="color:orange;">⚠️ API Facebook belum tersedia, menyusul!</span>';
-    } else if (detectedPlatform === 'youtube') {
-        statusDiv.innerHTML = '<span style="color:orange;">⚠️ API YouTube belum tersedia, menyusul!</span>';
-    } else {
-        statusDiv.innerHTML = '<span style="color:orange;">⚠️ Platform belum didukung! Coba TikTok dulu.</span>';
+    }
+    else {
+        statusDiv.innerHTML = '<span style="color:orange;">⚠️ Platform belum didukung! Coba YouTube atau TikTok.</span>';
     }
 });
 
