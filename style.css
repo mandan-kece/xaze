@@ -410,6 +410,53 @@ footer {
     margin: 1rem 0;
 }
 
+/* HASIL DOWNLOADER YOUTUBE MP3 */
+.youtube-result {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.youtube-thumb {
+    width: 120px;
+    border-radius: 16px;
+    object-fit: cover;
+}
+
+.youtube-info {
+    flex: 1;
+}
+
+.youtube-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.youtube-duration {
+    background: rgba(0,0,0,0.05);
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+}
+
+.audio-player {
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 40px;
+}
+
+@media (max-width: 600px) {
+    .youtube-thumb {
+        width: 80px;
+    }
+    .youtube-title {
+        font-size: 0.8rem;
+    }
+}
+
 @media (max-width: 700px) {
     .info-panel { flex-direction: column; align-items: flex-start; border-radius: 30px; }
     .main-content { padding: 90px 1rem 2rem; }
